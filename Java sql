@@ -1,0 +1,139 @@
+CREATE DATABASE EmployeeDB;
+
+USE EmployeeDB;
+
+CREATE TABLE employee (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    department VARCHAR(100),
+    salary DOUBLE
+);
+import java.sql.*;
+import java.util.Scanner;
+
+public class EmployeeDatabaseApp {
+    static Scanner sc = new Scanner(System.in);
+    public static Connection getConnection() {
+        Connection conn = null;
+        try {
+            // Load JDBC driver
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            conn = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/EmployeeDB", // Replace with your DB URL
+                "root",           // Your MySQL username
+                "your_password"   // Your MySQL password
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return conn;
+    }
+    public static void main(String[] args) {
+        while (true) {
+            System.out.println("\n=== Employee Management Menu ===");
+            System.out.println("1. Add Employee");
+            System.out.println("2. View All Employees");
+            System.out.println("3. Update Employee");
+            System.out.println("4. Delete Employee");
+            System.out.println("5. Exit");
+            System.out.print("Enter your choice: ");
+            int choice = sc.nextInt();
+
+            switch (choice) {
+                case 1 -> addEmployee();
+                case 2 -> viewEmployees();
+                case 3 -> updateEmployee();
+                case 4 -> deleteEmployee();
+                case 5 -> {
+                    System.out.println("Exiting...");
+                    System.exit(0);
+                }
+                default -> System.out.println("Invalid choice!");
+            }
+        }
+    }
+    public static void addEmployee() {
+        try (Connection conn = getConnection()) {
+            System.out.print("Enter Name: ");
+            String name = sc.next();
+            System.out.print("Enter Department: ");
+            String dept = sc.next();
+            System.out.print("Enter Salary: ");
+            double salary = sc.nextDouble();
+
+            String sql = "INSERT INTO employee (name, department, salary) VALUES (?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, name);
+            ps.setString(2, dept);
+            ps.setDouble(3, salary);
+            ps.executeUpdate();
+            System.out.println("Employee added successfully!");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public static void viewEmployees() {
+        try (Connection conn = getConnection()) {
+            String sql = "SELECT * FROM employee";
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+
+            System.out.println("\nID\tName\tDepartment\tSalary");
+            System.out.println("-------------------------------------------");
+            while (rs.next()) {
+                System.out.printf("%d\t%s\t%s\t%.2f\n",
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getString("department"),
+                    rs.getDouble("salary"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public static void updateEmployee() {
+        try (Connection conn = getConnection()) {
+            System.out.print("Enter Employee ID to update: ");
+            int id = sc.nextInt();
+            System.out.print("Enter New Name: ");
+            String name = sc.next();
+            System.out.print("Enter New Department: ");
+            String dept = sc.next();
+            System.out.print("Enter New Salary: ");
+            double salary = sc.nextDouble();
+
+            String sql = "UPDATE employee SET name = ?, department = ?, salary = ? WHERE id = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, name);
+            ps.setString(2, dept);
+            ps.setDouble(3, salary);
+            ps.setInt(4, id);
+
+            int rowsUpdated = ps.executeUpdate();
+            if (rowsUpdated > 0)
+                System.out.println("Employee updated successfully.");
+            else
+                System.out.println("Employee not found.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public static void deleteEmployee() {
+        try (Connection conn = getConnection()) {
+            System.out.print("Enter Employee ID to delete: ");
+            int id = sc.nextInt();
+
+            String sql = "DELETE FROM employee WHERE id = ?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, id);
+
+            int rowsDeleted = ps.executeUpdate();
+            if (rowsDeleted > 0)
+                System.out.println("Employee deleted successfully.");
+            else
+                System.out.println("Employee not found.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
